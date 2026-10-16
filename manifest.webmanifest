@@ -1,0 +1,9 @@
+{
+  "name": "竞彩足球 · 每日赛果走势",
+  "short_name": "竞彩走势",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f2f6f9",
+  "theme_color": "#0d2034"
+}
