@@ -323,7 +323,7 @@
     #jczq-trend-v2 .section { padding-top: 12px; }
     #jczq-trend-v2 .trend-section {
       --chart-muted: #a9bbca;
-      --chart-grid: rgb(194 213 228 / 24%);
+      --chart-grid: rgb(40 75 96 / 10%);
       --chart-normal: #54d2ee;
       --chart-handicap: #ffb454;
       padding: 13px 14px 9px;
@@ -342,9 +342,17 @@
     #jczq-trend-v2 .legend-stroke { width: 20px; }
     #jczq-trend-v2 .legend-stroke.blue { color: #54d2ee; }
     #jczq-trend-v2 .legend-stroke.orange { color: #ffb454; }
-    #jczq-trend-v2 .chart-shell { padding: 3px 0 0; border: 0; }
-    #jczq-trend-v2 .chart-foot { margin-top: 0; color: #a9bbca; font-size: 11px; }
-    #jczq-trend-v2 .chart-foot strong { color: #f5f8fb; }
+    #jczq-trend-v2 .chart-shell {
+      padding: 8px 6px 6px;
+      overflow: hidden;
+      border: 1px solid rgb(255 255 255 / 70%);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f8fbfc, #edf4f7);
+      box-shadow: inset 0 1px 0 #fff;
+    }
+    #jczq-trend-v2 .chart-wrap { overflow: hidden; }
+    #jczq-trend-v2 .chart-foot { margin-top: 5px; color: #76909e; font-size: 11px; }
+    #jczq-trend-v2 .chart-foot strong { color: #33566d; }
     #jczq-trend-v2 .report-section { padding-top: 15px; }
     #jczq-trend-v2 .report-heading { margin-bottom: 8px; }
     #jczq-trend-v2 .report-heading p { display: none; }
@@ -422,12 +430,14 @@
       background: color-mix(in srgb, var(--jc-muted) 65%, transparent);
     }
     #jczq-trend-v2 .match-note { display: none; }
-    #jczq-trend-v2 .y-label, #jczq-trend-v2 .x-label { fill: var(--chart-muted); font-size: 11px; }
-    #jczq-trend-v2 .lane, #jczq-trend-v2 .axis { stroke: var(--chart-grid); }
+    #jczq-trend-v2 .y-label, #jczq-trend-v2 .x-label { fill: #587184; font-size: 10px; }
+    #jczq-trend-v2 .y-label { font-size: 9px; font-weight: 700; }
+    #jczq-trend-v2 .x-label { font-weight: 700; }
+    #jczq-trend-v2 .category-badge { fill: #fff; stroke: #d8e4ea; stroke-width: 1; }
+    #jczq-trend-v2 .lane, #jczq-trend-v2 .axis { stroke: #d8e4ea; }
     #jczq-trend-v2 .normal-line { stroke: #54d2ee; stroke-width: 2; }
     #jczq-trend-v2 .handicap-line { stroke: #ffb454; stroke-width: 1.8; }
-    #jczq-trend-v2 .normal-point { fill: #54d2ee; stroke: #10243a; }
-    #jczq-trend-v2 .handicap-point { fill: #ffb454; stroke: #10243a; }
+    #jczq-trend-v2 .normal-point { fill: #fff; stroke: #168cab; }
     @media (max-width: 430px) {
       #jczq-trend-v2 .trend-section { padding: 12px 10px 9px; }
       #jczq-trend-v2 .section-heading p { display: none; }
@@ -590,8 +600,9 @@
     #jczq-trend-v2 .match-time { font-variant-numeric: tabular-nums; }
     #jczq-trend-v2 .match-state { color: #b26c1b; }
     #jczq-trend-v2 .is-pending .score strong { color: #91a2af; }
-    #jczq-trend-v2 .normal-line { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-    #jczq-trend-v2 .normal-point { stroke: #10243a; stroke-width: 2; cursor: pointer; }
+    #jczq-trend-v2 .normal-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    #jczq-trend-v2 .normal-line-halo { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; }
+    #jczq-trend-v2 .normal-point { stroke: #168cab; stroke-width: 2.5; cursor: pointer; }
     #jczq-trend-v2 .normal-point:focus-visible { outline: none; stroke: #fff; stroke-width: 3; }
     #jczq-trend-v2 .row-guide { stroke: var(--chart-grid); stroke-width: 1; stroke-dasharray: 1 5; }
     #jczq-trend-v2 .lane { stroke-width: 1; }
@@ -683,9 +694,9 @@
     <div class="match-list" role="list"></div>
   </section>
 
-  <script src="data/logos.js?v=20261014"></script>
+  <script src="data/logos.js?v=20261017"></script>
   <script src="core.js"></script>
-  <script src="app.js?v=20261014"></script>
+  <script src="app.js?v=20261017"></script>
 </div>
 </body>
 </html>

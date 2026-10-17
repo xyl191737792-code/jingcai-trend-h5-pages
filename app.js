@@ -154,12 +154,15 @@
     mode.categories.forEach((category, index) => {
       const xx = x(index);
       grid.append(makeSvg("line", { x1: xx, y1: top - 2, x2: xx, y2: height - bottom, class: "lane" }));
+      const badgeWidth = Math.min(84, Math.max(25, plotWidth / mode.categories.length - 4));
+      labels.append(makeSvg("rect", {
+        x: xx - badgeWidth / 2, y: 4, width: badgeWidth, height: 20, rx: 7, class: "category-badge"
+      }));
       labels.append(makeSvg("text", { x: xx, y: 18, class: "x-label", "text-anchor": "middle" }, category));
     });
     state.matches.forEach((match, index) => {
       const yy = y(index);
-      grid.append(makeSvg("line", { x1: left, y1: yy, x2: width - right, y2: yy, class: "row-guide" }));
-      labels.append(makeSvg("text", { x: left - 8, y: yy + 4, class: "y-label", "text-anchor": "end" }, String(match.code || "").replace(/^周/, "")));
+      labels.append(makeSvg("text", { x: left - 8, y: yy + 4, class: "y-label", "text-anchor": "end" }, String(match.code || "").replace(/^周[一二三四五六日]/, "")));
     });
     const categoryIndex = new Map(mode.categories.map((category, index) => [category, index]));
     const segments = [];
@@ -171,7 +174,11 @@
     });
     if (segment.length) segments.push(segment);
     for (const points of segments) {
-      if (points.length > 1) lines.append(makeSvg("polyline", { points: points.map(point => `${point.x},${point.y}`).join(" "), class: "normal-line", fill: "none" }));
+      if (points.length > 1) {
+        const coordinates = points.map(point => `${point.x},${point.y}`).join(" ");
+        lines.append(makeSvg("polyline", { points: coordinates, class: "normal-line-halo", fill: "none", "aria-hidden": "true" }));
+        lines.append(makeSvg("polyline", { points: coordinates, class: "normal-line", fill: "none" }));
+      }
       points.forEach(point => {
         const circle = makeSvg("circle", {
           cx: point.x, cy: point.y, r: 5.5, class: "normal-point", tabindex: "0", role: "button",
