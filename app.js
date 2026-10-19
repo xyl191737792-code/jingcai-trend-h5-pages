@@ -5,6 +5,7 @@
   const logos = window.teamLogos || {};
   const chart = root.querySelector(".trend-chart");
   const chartWrap = root.querySelector(".chart-wrap");
+  const chartAxis = root.querySelector(".chart-axis");
   const matchList = root.querySelector(".match-list");
   const grid = root.querySelector(".chart-grid");
   const labels = root.querySelector(".chart-labels");
@@ -16,11 +17,12 @@
   const shareButton = root.querySelector("#share-button");
   const ns = "http://www.w3.org/2000/svg";
   const state = { archive: null, days: [], visibleDays: [], matches: [], date: "", mode: "normal" };
+  let refreshingArchive = false;
   const modes = {
-    normal: { title: "胜平负", caption: "普通赛果：胜、平、负。按竞彩编号从上到下连接。", categories: core.allowed.normal, color: "#55d4ee", summaryName: "胜平负", fact: match => core.modeValue(match, "normal") },
-    handicap: { title: "让球胜平负", caption: "以主队让球线结算：让胜、让平、让负。", categories: core.allowed.handicap, color: "#ffb454", summaryName: "让球胜平负", fact: match => core.modeValue(match, "handicap") },
-    goals: { title: "进球数", caption: "全场总进球数；7 球及以上合并显示为 7+。", categories: core.allowed.goals, color: "#88a9f2", summaryName: "进球数", fact: match => core.modeValue(match, "goals") },
-    halfFull: { title: "半全场", caption: "前项为半场赛果，后项为全场赛果，共九种组合。", categories: core.allowed.halfFull, color: "#c28be0", summaryName: "半全场", fact: match => core.modeValue(match, "halfFull") }
+    normal: { title: "胜平负", categories: core.allowed.normal, color: "#5dd4e4", summaryName: "胜平负", fact: match => core.modeValue(match, "normal") },
+    handicap: { title: "让球胜平负", categories: core.allowed.handicap, color: "#f0b766", summaryName: "让球胜平负", fact: match => core.modeValue(match, "handicap") },
+    goals: { title: "进球数", categories: core.allowed.goals, color: "#91b9fa", summaryName: "进球数", fact: match => core.modeValue(match, "goals") },
+    halfFull: { title: "半全场", categories: core.allowed.halfFull, color: "#c6a4e9", summaryName: "半全场", fact: match => core.modeValue(match, "halfFull") }
   };
 
   function make(tag, attrs = {}, content) {
@@ -137,32 +139,47 @@
   }
   function renderChart() {
     const mode = modes[state.mode];
-    const width = Math.max(chartWrap.getBoundingClientRect().width, 280);
-    const left = width < 380 ? 48 : 58;
-    const right = 10;
-    const top = 32;
-    const bottom = 14;
-    const rowGap = 25;
+    const width = chartWrap.getBoundingClientRect().width;
+    if (!width) return;
+    const compactLabels = mode.categories.length > 5;
+    const left = compactLabels ? 78 : 86;
+    const right = compactLabels ? 18 : 24;
+    const top = 25;
+    const bottom = 25;
+    const rowGap = 40;
     const height = Math.max(top + Math.max(state.matches.length - 1, 0) * rowGap + bottom, 72);
     const plotWidth = Math.max(width - left - right, 1);
     const x = index => left + index * (plotWidth / Math.max(mode.categories.length - 1, 1));
     const y = index => top + index * rowGap;
+    const columnGap = plotWidth / Math.max(mode.categories.length - 1, 1);
+    const compactFontSize = width < 360 ? 9 : 10;
     chart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    chartAxis.setAttribute("viewBox", `0 0 ${width} 42`);
     chart.setAttribute("height", String(height));
     chart.style.height = `${height}px`;
-    grid.replaceChildren(); labels.replaceChildren(); lines.replaceChildren(); pointsLayer.replaceChildren();
+    grid.replaceChildren(); labels.replaceChildren(); lines.replaceChildren(); pointsLayer.replaceChildren(); chartAxis.replaceChildren();
+    chartAxis.append(makeSvg("text", { x: 33, y: 26, class: "number-heading", "text-anchor": "middle" }, "竞彩编号"));
     mode.categories.forEach((category, index) => {
       const xx = x(index);
-      grid.append(makeSvg("line", { x1: xx, y1: top - 2, x2: xx, y2: height - bottom, class: "lane" }));
-      const badgeWidth = Math.min(84, Math.max(25, plotWidth / mode.categories.length - 4));
-      labels.append(makeSvg("rect", {
-        x: xx - badgeWidth / 2, y: 4, width: badgeWidth, height: 20, rx: 7, class: "category-badge"
-      }));
-      labels.append(makeSvg("text", { x: xx, y: 18, class: "x-label", "text-anchor": "middle" }, category));
+      grid.append(makeSvg("line", { x1: xx, y1: 0, x2: xx, y2: height - bottom, class: "lane" }));
+      const labelWidth = category.length * (compactLabels ? compactFontSize : 12) + (compactLabels ? 4 : 10);
+      const headerWidth = Math.min(labelWidth, columnGap - 2);
+      chartAxis.append(makeSvg("text", {
+        x: xx, y: 27, class: "x-label", "font-size": compactLabels ? compactFontSize : 12, "text-anchor": "middle"
+      }, category));
+      chartAxis.insertBefore(makeSvg("rect", {
+        x: xx - headerWidth / 2, y: 7, width: headerWidth, height: 27, rx: 8, class: "category-badge"
+      }), chartAxis.lastChild);
     });
     state.matches.forEach((match, index) => {
       const yy = y(index);
-      labels.append(makeSvg("text", { x: left - 8, y: yy + 4, class: "y-label", "text-anchor": "end" }, String(match.code || "").replace(/^周[一二三四五六日]/, "")));
+      const number = makeSvg("g", { class: "chart-match-number", "data-index": String(index), tabindex: "0", role: "button", "aria-label": `${match.code} ${match.home} 对 ${match.away}，查看战报` });
+      number.append(
+        makeSvg("rect", { x: 1, y: yy - 15, width: 62, height: 30, rx: 8, class: "number-chip" }),
+        makeSvg("text", { x: 33, y: yy + 0.5, class: "y-label", "text-anchor": "middle" }, match.code)
+      );
+      labels.append(number);
+      if (!mode.fact(match)) labels.append(makeSvg("text", { x: left, y: yy + 4, class: "pending-label" }, "暂无赛果"));
     });
     const categoryIndex = new Map(mode.categories.map((category, index) => [category, index]));
     const segments = [];
@@ -180,16 +197,21 @@
         lines.append(makeSvg("polyline", { points: coordinates, class: "normal-line", fill: "none" }));
       }
       points.forEach(point => {
-        const circle = makeSvg("circle", {
-          cx: point.x, cy: point.y, r: 5.5, class: "normal-point", tabindex: "0", role: "button",
+        const fontSize = compactLabels ? 9.5 : 12;
+        const badgeWidth = compactLabels ? Math.max(20, Math.min(26, point.value.length * fontSize + 4)) : Math.max(30, point.value.length * fontSize + 10);
+        const node = makeSvg("g", {
+          class: "normal-point trend-node", tabindex: "0", role: "button",
           "aria-label": `${point.match.code} ${mode.title} ${point.value}，跳转到比赛信息`, "data-index": String(point.index)
         });
-        circle.addEventListener("click", () => focusMatch(point.index));
-        circle.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); focusMatch(point.index); } });
-        pointsLayer.append(circle);
+        node.append(
+          makeSvg("rect", { x: point.x - Math.max(18, badgeWidth / 2), y: point.y - 18, width: Math.max(36, badgeWidth), height: 36, fill: "transparent" }),
+          makeSvg("rect", { x: point.x - badgeWidth / 2, y: point.y - 13, width: badgeWidth, height: 26, rx: 9, class: "node-badge" }),
+          makeSvg("text", { x: point.x, y: point.y + 0.5, class: "node-label", "font-size": fontSize }, point.value)
+        );
+        pointsLayer.append(node);
       });
     }
-    chart.style.setProperty("--chart-series", mode.color);
+    root.querySelector(".trend-section").style.setProperty("--chart-series", mode.color);
   }
   function renderMatches({ history = "replace" } = {}) {
     matchList.replaceChildren(...state.matches.map(renderMatch));
@@ -247,7 +269,6 @@
       tab.tabIndex = active ? 0 : -1;
     });
     root.querySelector("#trend-title").textContent = modes[modeName].title + "走势";
-    root.querySelector("#trend-caption").textContent = modes[modeName].caption;
     root.querySelector("#chart-title").textContent = modes[modeName].title + "走势";
     root.querySelector("#legend-label").textContent = modes[modeName].categories.join(" / ");
     if (state.matches.length) root.querySelector("#chart-desc").textContent = `${core.dateLabel(state.date)}，${state.matches.length}场比赛按竞彩编号从上到下排列，展示${modes[modeName].title}；无赛果场次不参与连线。`;
@@ -312,6 +333,27 @@
       root.setAttribute("aria-busy", "false");
     }
   }
+  async function refreshArchiveIfChanged() {
+    if (!state.archive || refreshingArchive || document.visibilityState === "hidden") return;
+    refreshingArchive = true;
+    try {
+      const response = await fetch(new URL("data/archive.json", document.baseURI), { cache: "no-store", headers: { Accept: "application/json" } });
+      if (!response.ok) return;
+      const archive = await response.json();
+      if (!validArchive(archive)) return;
+      state.archive = archive;
+      state.days = [...archive.days].sort((a, b) => b.date.localeCompare(a.date));
+      state.visibleDays = state.days.slice(0, 14);
+      renderDateOptions();
+      const selectedDay = state.days.find(day => day.date === state.date);
+      if (!selectedDay) syncUrlState();
+      else if (JSON.stringify(selectedDay.matches) !== JSON.stringify(state.matches)) chooseDate(state.date, { announce: false });
+    } catch (_) {
+      // Keep the last good snapshot visible when a background refresh fails.
+    } finally {
+      refreshingArchive = false;
+    }
+  }
   async function fallbackCopy(url) {
     try {
       if (navigator.clipboard?.writeText && window.isSecureContext) {
@@ -350,6 +392,14 @@
   }
 
   dateSelect.addEventListener("change", () => chooseDate(dateSelect.value));
+  chart.addEventListener("click", event => {
+    const target = event.target.closest("[data-index]");
+    if (target) focusMatch(Number(target.dataset.index));
+  });
+  chart.addEventListener("keydown", event => {
+    const target = event.target.closest("[data-index]");
+    if (target && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); focusMatch(Number(target.dataset.index)); }
+  });
   shareButton.addEventListener("click", share);
   tabs.forEach((tab, index) => {
     tab.addEventListener("click", () => setMode(tab.dataset.mode));
@@ -361,6 +411,8 @@
     });
   });
   window.addEventListener("popstate", () => { if (state.days.length) syncUrlState(); });
+  window.setInterval(refreshArchiveIfChanged, 30_000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") void refreshArchiveIfChanged(); });
   if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => requestAnimationFrame(renderChart)).observe(chartWrap);
   window.addEventListener("resize", () => requestAnimationFrame(renderChart), { passive: true });
   loadArchive();
